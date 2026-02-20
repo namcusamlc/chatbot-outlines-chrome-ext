@@ -1,0 +1,38 @@
+#chat-outline-sidebar {
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  width: 250px;
+  max-height: 80vh;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  padding: 15px;
+  z-index: 9999;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  font-family: sans-serif;
+}
+
+#chat-outline-sidebar h3 {
+  margin-top: 0;
+  font-size: 16px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+#outline-list {
+  list-style: none;
+  padding: 0;
+}
+
+#outline-list li {
+  padding: 5px 0;
+  font-size: 14px;
+  color: #444;
+}
+
+#outline-list li:hover {
+  color: #1a73e8;
+  text-decoration: underline;
+}
