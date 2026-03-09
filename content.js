@@ -1,33 +1,76 @@
 let timeout = null;
+let highlightObserver = null;
+
+const updateHighlight = () => {
+  if (highlightObserver) highlightObserver.disconnect();
+
+  const headers = Array.from(document.querySelectorAll('h2, h3, h4'));
+  const listItems = document.querySelectorAll('#outline-list li');
+  const sidebarContent = document.querySelector('.sidebar-content');
+
+  highlightObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const index = headers.indexOf(entry.target);
+        
+        listItems.forEach(li => li.classList.remove('active'));
+        if (listItems[index]) {
+          listItems[index].classList.add('active');
+          
+          // FIX: Only auto-scroll the sidebar if the user ISN'T currently 
+          // hovering/scrolling the sidebar itself.
+          const isUserInteractingWithSidebar = sidebarContent.matches(':hover');
+          
+          if (!isUserInteractingWithSidebar) {
+            listItems[index].scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'nearest' 
+            });
+          }
+        }
+      }
+    });
+  }, {
+    root: null,
+    rootMargin: '0px 0px -75% 0px', 
+    threshold: 0
+  });
+
+  headers.forEach(header => highlightObserver.observe(header));
+};
 
 const updateOutline = () => {
-  // Debouncing: waits 300ms after the last change before running
   clearTimeout(timeout);
   timeout = setTimeout(() => {
     const list = document.getElementById('outline-list');
     if (!list) return;
 
-    // Only search for headers inside the chat container to save memory
-    // Gemini usually uses 'main' or specific article tags
     const headers = document.querySelectorAll('h2, h3, h4');
-    
     const fragment = document.createDocumentFragment();
+
     headers.forEach((header) => {
       const li = document.createElement('li');
       li.textContent = header.textContent.replace(/#/g, '').trim();
-      li.onclick = () => header.scrollIntoView({ behavior: 'smooth' });
+      
+      // Add class for indentation (level-h2, level-h3, etc.)
+      li.classList.add(`level-${header.tagName.toLowerCase()}`);
+      
+      li.onclick = () => header.scrollIntoView({ behavior: 'smooth', block: 'start' });
       fragment.appendChild(li);
     });
 
     list.innerHTML = '';
     list.appendChild(fragment);
+
+    // CRITICAL: Re-initialize the highlight observer after headers/list are rebuilt
+    updateHighlight();
   }, 300); 
 };
 
 // Create the Sidebar Container
 const sidebar = document.createElement('div');
 sidebar.id = 'chat-outline-sidebar';
-sidebar.className = 'sidebar-open'; // Default to open
+sidebar.className = 'sidebar-open';
 sidebar.innerHTML = `
   <button id="outline-toggle">☰</button>
   <div class="sidebar-content">
@@ -37,22 +80,21 @@ sidebar.innerHTML = `
 `;
 document.body.appendChild(sidebar);
 
-// Observer - Only watch the chat area if possible, or use a filter
+// Toggle Functionality
+const toggleBtn = document.getElementById('outline-toggle');
+toggleBtn.onclick = () => {
+  sidebar.classList.toggle('sidebar-closed');
+};
+
+// Observer - Watch for chat updates
 const observer = new MutationObserver((mutations) => {
-  for (let mutation of mutations) {
-    // Optimization: Ignore changes if they happened inside our own sidebar
-    if (sidebar.contains(mutation.target)) return;
-    
+  const isSidebarChange = mutations.some(m => sidebar.contains(m.target));
+  if (!isSidebarChange) {
     updateOutline();
-    break; 
   }
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
 
-// Toggle Functionality
-const toggleBtn = document.getElementById('outline-toggle');
-toggleBtn.onclick = () => {
-  sidebar.classList.toggle('sidebar-closed');
-  sidebar.classList.toggle('sidebar-open');
-};
+// Initial run
+updateOutline();
