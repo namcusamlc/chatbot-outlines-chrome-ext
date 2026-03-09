@@ -24,10 +24,17 @@ const updateOutline = () => {
   }, 300); 
 };
 
-// Create Sidebar (same as before)
+// Create the Sidebar Container
 const sidebar = document.createElement('div');
 sidebar.id = 'chat-outline-sidebar';
-sidebar.innerHTML = '<h3>Chat Outline</h3><ul id="outline-list"></ul>';
+sidebar.className = 'sidebar-open'; // Default to open
+sidebar.innerHTML = `
+  <button id="outline-toggle">☰</button>
+  <div class="sidebar-content">
+    <h3>Chat Outline</h3>
+    <ul id="outline-list"></ul>
+  </div>
+`;
 document.body.appendChild(sidebar);
 
 // Observer - Only watch the chat area if possible, or use a filter
@@ -42,3 +49,10 @@ const observer = new MutationObserver((mutations) => {
 });
 
 observer.observe(document.body, { childList: true, subtree: true });
+
+// Toggle Functionality
+const toggleBtn = document.getElementById('outline-toggle');
+toggleBtn.onclick = () => {
+  sidebar.classList.toggle('sidebar-closed');
+  sidebar.classList.toggle('sidebar-open');
+};
