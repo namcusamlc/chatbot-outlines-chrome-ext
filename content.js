@@ -45,15 +45,20 @@ const updateOutline = () => {
     const list = document.getElementById('outline-list');
     if (!list) return;
 
-    const headers = document.querySelectorAll('h2, h3, h4');
+    // FIX: Select h2, h3, h4 tags that are NOT inside our sidebar
+    const headers = document.querySelectorAll('h2:not(#chat-outline-sidebar *), h3:not(#chat-outline-sidebar *), h4:not(#chat-outline-sidebar *)');
+    
     const fragment = document.createDocumentFragment();
 
     headers.forEach((header) => {
+      // Safety check: ensure the header actually has text
+      if (!header.textContent.trim()) return;
+
       const li = document.createElement('li');
       li.textContent = header.textContent.replace(/#/g, '').trim();
       
-      // Add class for indentation (level-h2, level-h3, etc.)
-      li.classList.add(`level-${header.tagName.toLowerCase()}`);
+      const level = header.tagName.toLowerCase();
+      li.classList.add(`level-${level}`);
       
       li.onclick = () => header.scrollIntoView({ behavior: 'smooth', block: 'start' });
       fragment.appendChild(li);
@@ -62,7 +67,6 @@ const updateOutline = () => {
     list.innerHTML = '';
     list.appendChild(fragment);
 
-    // CRITICAL: Re-initialize the highlight observer after headers/list are rebuilt
     updateHighlight();
   }, 300); 
 };
@@ -73,9 +77,13 @@ sidebar.id = 'chat-outline-sidebar';
 sidebar.className = 'sidebar-open';
 sidebar.innerHTML = `
   <button id="outline-toggle">☰</button>
-  <div class="sidebar-content">
-    <h3>Chat Outline</h3>
-    <ul id="outline-list"></ul>
+  <div class="sidebar-container">
+    <div class="sidebar-header">
+      <h3>Chat Outline</h3>
+    </div>
+    <div class="sidebar-scroll-area">
+      <ul id="outline-list"></ul>
+    </div>
   </div>
 `;
 document.body.appendChild(sidebar);
